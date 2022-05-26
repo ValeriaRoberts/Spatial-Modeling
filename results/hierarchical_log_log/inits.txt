@@ -1,0 +1,6 @@
+function(){list(beta = rep(0,2),
+                         mu.t = 0, 
+                         tau.t = 1,
+                         theta = rep(0,n),
+                         yf = rep(0,n))}
+<bytecode: 0x00000268fad4a4c0>

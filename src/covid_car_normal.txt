@@ -2,8 +2,8 @@ model
 {
 #Likelihood
 for (i in 1:n) {
-	y[i] ~ dpois(mu[i]) ## log(ee) + theta + phi
-	mu[i]<-lambda[i]*ee[i] ## log(ee) + log(lambda)
+	y[i] ~ dpois(mu[i])
+	mu[i]<-lambda[i]*ee[i]
 	log(lambda[i])<-beta[1]+beta[2]*x[i]+theta[i]+phi[i]
 	}
 #Priors 

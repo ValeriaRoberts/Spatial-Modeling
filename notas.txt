@@ -3,31 +3,87 @@ Pendientes:
 Revisar si es correcto dividir la Deathrate por 1000000; hay que
 checar en la fuente de los datos como fue construida.
 
+
 Dudas:
 
 ¿Esta bien el tomar un 5% del total de muertes como nuestro numero
 esperado de muertes? En si lo hicimos para que los numeros se parecieran
 a los de scottland, pero no hay mayor justificacion detras de ello.
 
+
 Modelos:
+
 
 CAR Intrinseco
 
 	y, e : Sale error.
+	
 	y/10, e/10 : Sale error.
+	
 	y/100, e/100 : Sale error.
-	y/1000, e/1000 : Sí corre pero hay parámetros que NO convergen,
+	
+	y/1000, e/1000 : Si corre pero hay parametros que NO convergen,
 			 en particular las y predecidas se ven muy mal,
 			 asi como las lambdas. Parece ser que es por Brazil.
+			 
 	y/1000, e/1000, xBrazil : Se siguen viendo mal aun sin Brazil. Ahora
 			 parece que esta mal por Bolivia.
+			 
 	y/1000, e/1000, xBrazil : Se siguen viendo mal aun sin ambos. No
 			 parece que la solucion sea estar quitando paises.
+			 
 	y/10000, e/10000 : Sale error.
-	log(y+1), log(e+1) : Se ve bien todo. El tema sería la interpretación.
+	
+	log(y+1), log(e+1) : Se ve bien todo. El tema seria la interpretacion.
+
 
 CAR Propio
 
-	Hay algo raro con las traceplot: En Bugs y con el comando traceplot()
-	parece que no convergen, pero con la funcion que guarda los plots, sí.
+	y, e , rho=90 : Hay algo raro con las traceplot: En Bugs y con el comando traceplot()
+	parece que no convergen, pero con la funcion que guarda los plots, s�. De ahi en 
+	fuera, los reusltados se ven muy bien.
 	
+	y, e , rho=80 : Hay algo raro con las traceplot: En Bugs y con el comando traceplot()
+	parece que no convergen, pero con la funcion que guarda los plots, s�. De ahi en 
+	fuera, los reusltados se ven muy bien.
+	
+	y/1000, e/1000, rho=90  : No convergen algunas cadenas, los reusltados se ven mal.
+	
+	log(y+1), log(e+1), rho=90 : Se ve bien todo. El tema seria la interpretacion.
+	
+	log(y+1), log(e+1), rho=80 : Se ve bien todo. El tema seria la interpretacion.
+	
+	
+CAR Intrinseco con log(y) Normal
+
+  Nota: Este en si fue pensado para ocuparlo con log(y), pero lo intentamos con
+  otras transformaciones solo para ver que salia.
+
+  y, e : Sale error.
+  
+  y/1000, e/1000 : Los resultados salen raros, en general erroneos, como en si
+  se esperaba.
+  
+  log(y+1), log(e+1) : Algunas cadenas se ven muy mal y el mapa de SMR se dispara 
+  en el ultimo rango. Aun a pesar de esto, el DIC se ve mejor en comparacion a los
+  anteriores modelos. 
+	
+CAR Propio con log(y) Normal
+
+  log(y+1), log(e+1), rho=90 : Algunas cadenas se ven muy mal y el mapa de SMR se 
+  dispara en el ultimo rango.
+  
+  log(y+1), log(e+1), rho=80 : Algunas cadenas se ven muy mal y el mapa de SMR se 
+  dispara en el ultimo rango.
+  
+Hierarchical
+
+  log(y+1), log(e+1) : Hay algo raro con las traceplot: En Bugs y con el comando
+  traceplot() parece que no convergen, pero con la funcion que guarda los plots, s�.
+  De ahi en fuera, los reusltados se ven muy bien.
+  
+Algunos otros
+
+  CAR Propio rho=90 con X escalada: Buena convergencia pero el DIC es el peor
+  
+  CAR Propio rho=90 sin X: Buena convergencia pero mal DIC

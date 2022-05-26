@@ -117,13 +117,13 @@ save_traceplots <- function(model_id, covid.sim){
   
   for (name in params_names){
     
-    for (k in 1:dim(covid.sim$sims.list[name][[1]])[2]){
+    if(length(covid.sim$sims.list[name][[1]]) < (covid.sim$n.sims + 1)){
       
-      print(paste0("Saving traceplot for ", name,"_",k))
-      col_name <- paste0(name,"_",k)
+      print(paste0("Saving traceplot for ", name))
+      col_name <- paste0(name)
       
       sims <- covid.sim$sims.list[name][[1]]
-      sim <- sims[,k]
+      sim <- sims
       
       p <- as_tibble(sim) |>
         mutate(chain = factor(chain), n_sim = n_sim) |>
@@ -136,6 +136,31 @@ save_traceplots <- function(model_id, covid.sim){
       dev.off()
       
     }
+    
+    else{
+     
+      for (k in 1:dim(covid.sim$sims.list[name][[1]])[2]){
+        
+        print(paste0("Saving traceplot for ", name,"_",k))
+        col_name <- paste0(name,"_",k)
+        
+        sims <- covid.sim$sims.list[name][[1]]
+        sim <- sims[,k]
+        
+        p <- as_tibble(sim) |>
+          mutate(chain = factor(chain), n_sim = n_sim) |>
+          ggplot() +
+          geom_line(aes(n_sim, value, color = chain)) +
+          labs(y = col_name)
+        
+        png(paste0("../results/", model_id, "/", col_name, "_tp.png"))
+        print(p)
+        dev.off()
+        
+      }
+       
+    }
+      
   }
 
 }
@@ -161,7 +186,7 @@ save_mcmc_params <- function(model_id, covid.sim){
 ### adicional segun la region.
 
 # Carga de datos
-datos <-  read.csv("../data/weeks.csv")
+datos <-  read.csv("../data/covid.csv")
 
 # Filtramos la region de interes
 region <- "South America"
@@ -390,7 +415,7 @@ C <- C[C != 0]
 ### rho puede estar en el rango (1/min_eigen, 1/max_eigen)
 max_eigen <- max(eigenvalues_bugs)
 min_eigen <- min(eigenvalues_bugs)
-rho_weight <- 80 # Elegir del 0 al 100
+rho_weight <- 90 # Elegir del 0 al 100
 rho <- (rho_weight/100) * (1 / max_eigen) + ((100-rho_weight)/100) * (1 / min_eigen)
 
 ############ Asignacion de variables para modelo ############
@@ -416,6 +441,8 @@ rho <- (rho_weight/100) * (1 / max_eigen) + ((100-rho_weight)/100) * (1 / min_ei
 
 x <- covid$mean_net_migration
 
+x <- (covid$mean_net_migration |> scale(T,T))[,1]
+
 data_normal <- list("n" = n, "y" = y, "ee" = ee, "x" = x, 
              "adj" = adj, "weights" = weights, "num" = m)
 
@@ -423,9 +450,17 @@ data_proper <- list("n" = n, "y" = y, "ee" = ee, "x" = x,
              "adj" = adj, "num" = m, "mu_areas" = mu_areas,
              "C"=C, "M"=M, "gamma"=rho)
 
-data_proper_rho_prior <- c(data_proper[-length(data_proper)], #quitamos gamma
+data_proper_nox <- list("n" = n, "y" = y, "ee" = ee, 
+                    "adj" = adj, "num" = m, "mu_areas" = mu_areas,
+                    "C"=C, "M"=M, "gamma"=rho)
+
+data_proper_rho_prior <- c("n" = n, "y" = y, "ee" = ee, "x" = x, 
+                           "adj" = adj, "num" = m, "mu_areas" = mu_areas,
+                           "C"=C, "M"=M,  #quitamos gamma
                            "min_ie"=(1 / min_eigen),"max_ie"=(1 / max_eigen))
 # data_proper_rho_prior <- c(data_proper[-length(data_proper)]) #quitamos gamma
+
+data_hierarchical <- list("n" = n, "y" = y, "ee" = ee, "x" = x)
 
 #-Defining inits-
 
@@ -435,6 +470,13 @@ inits <- function(){list(beta = rep(0,2),
                        theta = rep(0,n),
                        phi = rep(0,n),
                        yf = rep(0,n))}
+
+inits_proper_nox <- function(){list(beta = 0,
+                         tau.t = 1,
+                         tau.c = 1,
+                         theta = rep(0,n),
+                         phi = rep(0,n),
+                         yf = rep(0,n))}
 
 inits_proper_rho_prior <- function(){list(beta = rep(0,2),
                                          tau.t = 1,
@@ -452,8 +494,17 @@ inits_normal_normal <- function(){list(beta = rep(0,2),
                          phi = rep(0,n),
                          yf = rep(0,n))}
 
+inits_hierarchical <- function(){list(beta = rep(0,2),
+                         mu.t = 0, 
+                         tau.t = 1,
+                         theta = rep(0,n),
+                         yf = rep(0,n))}
+
 #-Selecting parameters to monitor-
+
 parameters <- c("beta", "lambda", "theta", "phi", "yf")
+
+parameters_hierarchical <- c("beta", "lambda", "theta", "yf")
 
 #-Running code-
 #OpenBUGS
@@ -462,6 +513,10 @@ covid.sim_normal <- bugs(data_normal, inits, parameters, model.file = "covid_car
                          debug = T)
 
 covid.sim_proper <- bugs(data_proper, inits, parameters, model.file = "covid_car_proper.txt",
+                         n.iter = 10000, n.chains = 3, n.burnin = 1000, n.thin = 1,
+                         debug = T)
+
+covid.sim_proper_nox <- bugs(data_proper_nox, inits_proper_nox, parameters, model.file = "covid_car_proper_nox.txt",
                          n.iter = 10000, n.chains = 3, n.burnin = 1000, n.thin = 1,
                          debug = T)
 # No corre
@@ -475,11 +530,21 @@ covid.sim_normal_normal <- bugs(data_normal, inits_normal_normal, parameters,
                                 n.iter = 10000, n.chains = 3, n.burnin = 1000, n.thin = 1,
                                 debug = T)
 
+covid.sim_proper_normal <- bugs(data_proper, inits_normal_normal, parameters,
+                                model.file = "covid_car_proper_normal.txt",
+                                n.iter = 10000, n.chains = 3, n.burnin = 1000, n.thin = 1,
+                                debug = T)
+
+covid.sim_hierarchical <- bugs(data_hierarchical, inits_hierarchical, parameters_hierarchical,
+                                model.file = "covid_hierarchical.txt",
+                                n.iter = 10000, n.chains = 3, n.burnin = 1000, n.thin = 1,
+                                debug = T)
+
 ########### Identificacion del modelo ###########
 #
 # Elegimos un identificador para guardar la corrida actual
 
-model_id <- "car_propio_rho_80"
+model_id <- "car_proper_log_log_rho_90_nox"
 
 ###### !!! Importante !!! ######
 #
@@ -501,10 +566,29 @@ model_id <- "car_propio_rho_80"
   save_definition(model_id, data_proper, inits, parameters, covid.sim)
 }
 
-### Modelo CAR Intrinseco con respuesta Normal
+### Modelo CAR Propio (Sin x)
+{
+  covid.sim <- covid.sim_proper_nox
+  save_definition(model_id, data_proper_nox, inits_proper_nox, parameters, covid.sim)
+}
+
+### Modelo CAR Intrinseco con log(y) Normal
 {
   covid.sim <- covid.sim_normal_normal
   save_definition(model_id, data_normal, inits_normal_normal, parameters, covid.sim)
+}
+
+### Modelo CAR Propio con log(y) Normal
+{
+  covid.sim <- covid.sim_proper_normal
+  save_definition(model_id, data_proper, inits_normal_normal, parameters, covid.sim)
+}
+
+### Modelo Hierarchical
+{
+  covid.sim <- covid.sim_hierarchical
+  save_definition(model_id, data_hierarchical, inits_hierarchical,
+                  parameters_hierarchical, covid.sim)
 }
 
 # covid.sim$sims.list["phi"][[1]][,6] |>
@@ -678,4 +762,32 @@ model_id <- "car_propio_rho_80"
          fill = attr(colcode, "palette"), cex=1, bty="n")
   title(main="SMR")
 }
+
+############## Resumen de resultados ##############
+
+log_log_folders <- list.files("../results/", "log_log",
+                            recursive=TRUE, include.dirs=TRUE)
+
+log_log_folders <- log_log_folders[!(log_log_folders |> grepl(pattern = ".png"))]
+
+log_log_dics <- list()
+
+for (folder in log_log_folders){
+  
+  dic <- read.table(paste0("../results/",folder,"/dic.txt"))
+  log_log_dics[folder] <- dic[2][[1]]
+  
+}
+
+log_log_dics_df <-  log_log_dics |> 
+  as_tibble() |> 
+  t() |>
+  as_tibble() |>
+  rename(dic = V1) |> 
+  mutate(model  = log_log_folders |> 
+           gsub(pattern = "_log_log", replacement = "")) |>
+  select(c(model, dic)) |>
+  arrange(dic)
+
+log_log_dics_df
 
