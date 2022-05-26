@@ -1,7 +1,0 @@
-function(){list(beta = rep(0,2),
-                       tau.t = 1,
-                       tau.c = 1,
-                       theta = rep(0,n),
-                       phi = rep(0,n),
-                       yf = rep(0,n))}
-<bytecode: 0x000002a327020968>
