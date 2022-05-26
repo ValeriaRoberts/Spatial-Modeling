@@ -1,0 +1,48 @@
+---
+title: "| ![](logo.png){width=6in} \\vspace{0.2in} \n`r format(params$term)` \n \\vspace{0.1in} "
+
+subtitle: ""
+
+author:
+  - Miguel Calvo Valente, 203129 
+  - Nelson Alejandro Gil Vargas, 203058
+  - Valeria Roberts Trujillo, 173120
+date: "Mayo 2022"
+
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    
+params:
+  term: "Spatial Modeling Covid Mortality in South America"
+---
+
+\newpage
+
+# Introducción
+
+## Descripción del problema
+
+La regresión espacial es un enfoque popular en muchas disciplinas para estimar modelos de regresión en presencia de correlación espacial. El control de la correlación espacial en nuestros modelos nos permite controlar mejor los efectos de vecindad.
+
+Al analizar la propagación y el impacto de la enfermedad COVID-19, observamos una correlación espacial incontrolada en las muertes entre países vecinos. Esto puede ser el resultado del comercio o las migraciones entre países vecinos o el resultado de otras propiedades del clima o la geografía que son difíciles de contabilizar en el modelo.
+
+En este resporte, nos interesa identificar si el control de esta autocorrelación proporciona estimaciones más estables a nuestro modelo, así como si las distancias físicas entre países reflejan nociones honestas de similitud entre naciones que, de otro modo, podrían ser mejor captadas por el número total de vuelos o la migración entre países o el comercio.
+
+## Contexto
+
+El año ante pasado, 2020, conceptos como “confinamientos”, “uso obligatorio de mascarillas” y “distanciamiento social” eran desconocidos para la mayoría de nosotros. Hoy forman parte de nuestro vocabulario habitual. El SARS-COV2 apareció en China el diciembre 2019 y provoca una enfermedad llamada COVID-19, que se ha extendido por el mundo y fue declarada pandemia global por la Organización Mundial de la Salud.
+Mientras la pandemia de COVID-19 sigue afectando todos los aspectos de nuestras vidas. Nos interesa estudiar sus efectos y como nos relaciona con el mundo. 
+
+## Objetivo
+
+# Datos
+
+# Modelado e implementación
+
+# Resultados
+
+# Referencias
+
+# Apéndice
