@@ -1,0 +1,22 @@
+model
+{
+#Likelihood
+for (i in 1:n) {
+	y[i] ~ dpois(mu[i]) ## log(ee) + theta + phi
+	mu[i]<-lambda[i]*ee[i] ## log(ee) + log(lambda)
+	log(lambda[i])<-beta[1]+beta[2]*x[i]+theta[i]+phi[i]
+	}
+	
+#Priors 
+for (i in 1:2) { beta[i] ~ dnorm(0,0.001) }
+for (i in 1:n) { theta[i] ~ dnorm(0,tau.t) }
+tau.t ~ dgamma(0.001,0.001)
+phi[1:n] ~ car.proper(mu_areas[],C[],adj[],num[],M[],tau.c, gamma.c)
+tau.c ~ dgamma(0.1,0.1)
+#gamma.c ~ dunif(0.8, 0.9)
+gamma.c ~ dunif(min_ie, max_ie)
+
+#Prediction 
+for (i in 1:n) { yf[i] ~ dpois(mu[i]) }
+
+}

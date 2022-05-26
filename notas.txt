@@ -1,0 +1,33 @@
+Pendientes:
+
+Revisar si es correcto dividir la Deathrate por 1000000; hay que
+checar en la fuente de los datos como fue construida.
+
+Dudas:
+
+¿Esta bien el tomar un 5% del total de muertes como nuestro numero
+esperado de muertes? En si lo hicimos para que los numeros se parecieran
+a los de scottland, pero no hay mayor justificacion detras de ello.
+
+Modelos:
+
+CAR Intrinseco
+
+	y, e : Sale error.
+	y/10, e/10 : Sale error.
+	y/100, e/100 : Sale error.
+	y/1000, e/1000 : Sí corre pero hay parámetros que NO convergen,
+			 en particular las y predecidas se ven muy mal,
+			 asi como las lambdas. Parece ser que es por Brazil.
+	y/1000, e/1000, xBrazil : Se siguen viendo mal aun sin Brazil. Ahora
+			 parece que esta mal por Bolivia.
+	y/1000, e/1000, xBrazil : Se siguen viendo mal aun sin ambos. No
+			 parece que la solucion sea estar quitando paises.
+	y/10000, e/10000 : Sale error.
+	log(y+1), log(e+1) : Se ve bien todo. El tema sería la interpretación.
+
+CAR Propio
+
+	Hay algo raro con las traceplot: En Bugs y con el comando traceplot()
+	parece que no convergen, pero con la funcion que guarda los plots, sí.
+	
