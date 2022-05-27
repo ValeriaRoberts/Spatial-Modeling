@@ -6,9 +6,11 @@ checar en la fuente de los datos como fue construida.
 
 Dudas:
 
-Â¿Esta bien el tomar un 5% del total de muertes como nuestro numero
+¿Esta bien el tomar un 5% del total de muertes como nuestro numero
 esperado de muertes? En si lo hicimos para que los numeros se parecieran
 a los de scottland, pero no hay mayor justificacion detras de ello.
+
+¿Tambien hay que reportar los valores iniciales para tau.c, tau.t, etc.?
 
 
 Modelos:

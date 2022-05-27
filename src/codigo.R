@@ -74,6 +74,19 @@ obtener_poligono <- function(pais){
   ps = Polygons(list(p), pais)
   
   ps
+  
+}
+
+plot_arrows <- function(region){
+  
+  if (region == region){
+    arrows(-75, -39, -72, -38, length = 0.1) #Chile
+    arrows(-56, 8, -59, 5, length = 0.1) #Guyana
+    arrows(-81, 2, -78, -1, length = 0.1) #Ecuador
+    arrows(-75, -22.5, -59, -22.5, length = 0.1) #Paraguay
+    arrows(-52, -35, -56, -32, length = 0.1) #Uruguay
+  }
+  
 }
 
 save_definition <- function(model_id, data, inits, parameters, covid.sim){
@@ -240,17 +253,48 @@ covid
 
 # Definimos la lista en la que guardaremos los poligonos
 lista_poligonos <- list()
+lista_coords_x <- list()
+lista_coords_y <- list()
 
 # Guardamos los poligonos en la lista que definimos
 for (pais in covid |> pull(Country)){
   lista_poligonos[pais] <- obtener_poligono(pais)
+  lista_coords_x[pais] <- (lista_poligonos[pais][[1]]@Polygons[[1]]@coords |> colMeans())[1]
+  lista_coords_y[pais] <- (lista_poligonos[pais][[1]]@Polygons[[1]]@coords |> colMeans())[2]
 }
 
 # Y creamos el objeto SpatialPolygons
 sps = SpatialPolygons(lista_poligonos)
 plot(sps)
 
+# Guardamos las coordenadas centrales de cada pais
+mean_coords <- tibble(
+  Country = covid$Country,
+  lista_coords_x |> as_tibble() |> t() |> as_tibble() |>  rename(x = V1), 
+  lista_coords_y |> as_tibble() |> t() |> as_tibble() |>  rename(y = V1)
+)
 
+# Pequenios ajustes para que no se encimen
+mean_coords <- mean_coords |>
+  mutate(x = replace(x, Country == "Argentina", -64)) |>
+  mutate(y = replace(y, Country == "Argentina", -32)) |>
+  mutate(x = replace(x, Country == "Brazil", -52)) |>
+  mutate(x = replace(x, Country == "Chile", -78)) |>
+  mutate(y = replace(y, Country == "Chile", -39)) |>  
+  mutate(x = replace(x, Country == "Colombia", -74)) |>
+  mutate(x = replace(x, Country == "Ecuador", -86)) |>
+  mutate(y = replace(y, Country == "Ecuador", 4)) |>
+  mutate(x = replace(x, Country == "Guyana", -54)) |>
+  mutate(y = replace(y, Country == "Guyana", 9)) |>
+  mutate(x = replace(x, Country == "Paraguay", -78)) |>
+  mutate(y = replace(y, Country == "Paraguay", -21)) |>
+  mutate(x = replace(x, Country == "Peru", -76)) |>
+  mutate(x = replace(x, Country == "Uruguay", -50)) |>
+  mutate(y = replace(y, Country == "Uruguay", -36)) |>
+  mutate(y = replace(y, Country == "Venezuela", 9)) |>
+  mutate(x = replace(x, Country == "Venezuela", -66))
+  
+  
 ################# Graficas de las coordenadas #################
 
 # Procesamiento adicional segun la region
@@ -260,7 +304,19 @@ if (region == "South America"){
   nclr <- 4
 }
 
-#### SMR (standarized morbility rate)
+plot_arrows <- function(region){
+  
+  if (region == region){
+    arrows(-75, -39, -72, -38, length = 0.1) #Chile
+    arrows(-56, 8, -59, 5, length = 0.1) #Guyana
+    arrows(-81, 2, -78, -1, length = 0.1) #Ecuador
+    arrows(-75, -22.5, -59, -22.5, length = 0.1) #Paraguay
+    arrows(-52, -35, -56, -32, length = 0.1) #Uruguay
+  }
+  
+}
+
+  #### SMR (standarized morbility rate)
 # En este caso, analizamos lambda = observados / esperados
 {
   plotvar <- covid$mean_fatalities/covid$mean_deathrate
@@ -275,6 +331,9 @@ if (region == "South America"){
   plot(covid.map, col = colcode)
   legend(x_etiquetas, y_etiquetas, legend = names(attr(colcode, "table")), 
          fill = attr(colcode, "palette"), cex=1, bty="n")
+  text(mean_coords$x, mean_coords$y, mean_coords$Country)
+  text(mean_coords$x, mean_coords$y-3, plotvar |> round(2))
+  plot_arrows(region)
   title(main="SMR")
   dev.off()
 }
@@ -294,12 +353,14 @@ if (region == "South America"){
   plot(covid.map, col = colcode)
   legend(x_etiquetas, y_etiquetas, legend = names(attr(colcode, "table")), 
          fill = attr(colcode, "palette"), cex=1, bty="n")
+  text(mean_coords$x, mean_coords$y, mean_coords$Country)
+  text(mean_coords$x, mean_coords$y-3, plotvar |> round(2))
+  plot_arrows(region)
   title(main="SMR")
   dev.off()
 }
 
-#### SMR (standarized morbility rate)
-# En este caso, analizamos lambda = observados / esperados
+#### Net Migration
 {
   plotvar <- covid$mean_net_migration
   plotclr <- brewer.pal(nclr,"YlOrBr")
@@ -312,9 +373,14 @@ if (region == "South America"){
   plot(covid.map, col = colcode)
   legend(x_etiquetas, y_etiquetas, legend = names(attr(colcode, "table")), 
          fill = attr(colcode, "palette"), cex=1, bty="n")
+  text(mean_coords$x, mean_coords$y, mean_coords$Country)
+  text(mean_coords$x, mean_coords$y-3, plotvar |> round(2))
+  plot_arrows(region)
   title(main="Net Migration")
   dev.off()
 }
+
+
 
 ################# Matrices de adyacencia #################
 
@@ -443,6 +509,8 @@ x <- covid$mean_net_migration
 
 x <- (covid$mean_net_migration |> scale(T,T))[,1]
 
+#-Defining data-
+
 data_normal <- list("n" = n, "y" = y, "ee" = ee, "x" = x, 
              "adj" = adj, "weights" = weights, "num" = m)
 
@@ -507,7 +575,7 @@ parameters <- c("beta", "lambda", "theta", "phi", "yf")
 parameters_hierarchical <- c("beta", "lambda", "theta", "yf")
 
 #-Running code-
-#OpenBUGS
+
 covid.sim_normal <- bugs(data_normal, inits, parameters, model.file = "covid_car_normal.txt",
                          n.iter = 10000, n.chains = 3, n.burnin = 1000, n.thin = 1,
                          debug = T)
@@ -519,7 +587,7 @@ covid.sim_proper <- bugs(data_proper, inits, parameters, model.file = "covid_car
 covid.sim_proper_nox <- bugs(data_proper_nox, inits_proper_nox, parameters, model.file = "covid_car_proper_nox.txt",
                          n.iter = 10000, n.chains = 3, n.burnin = 1000, n.thin = 1,
                          debug = T)
-# No corre
+# Este no corre
 covid.sim_proper_rho_prior <- bugs(data_proper_rho_prior, inits_proper_rho_prior, parameters,
                                    model.file = "covid_car_proper_rho_prior.txt",
                                    n.iter = 10000, n.chains = 3, n.burnin = 1000, n.thin = 1,
@@ -544,7 +612,7 @@ covid.sim_hierarchical <- bugs(data_hierarchical, inits_hierarchical, parameters
 #
 # Elegimos un identificador para guardar la corrida actual
 
-model_id <- "car_proper_log_log_rho_90_nox"
+model_id <- "car_proper_rho_90_nox"
 
 ###### !!! Importante !!! ######
 #
@@ -590,24 +658,6 @@ model_id <- "car_proper_log_log_rho_90_nox"
   save_definition(model_id, data_hierarchical, inits_hierarchical,
                   parameters_hierarchical, covid.sim)
 }
-
-# covid.sim$sims.list["phi"][[1]][,6] |>
-#   as_tibble() |>
-#   mutate(chain = as.character(c(rep(1, 9000), rep(2, 9000), rep(3, 9000)))) |>
-#   mutate(index = seq(1:27000)) |>
-#   pivot_wider(values_from = value, names_from = chain) |>
-#   select(c(index, `1`)) |>
-#   drop_na() |>
-#   ggplot(aes(x=index, y= `1`)) + 
-#   geom_line()
-# 
-# covid.sim$sims.list["phi"][[1]][,6] |>
-#   as_tibble() |>
-#   mutate(chain = as.character(c(rep(1, 9000), rep(2, 9000), rep(3, 9000)))) |>
-#   mutate(index = seq(1:27000)) |>
-#   filter(index < 9001) |>
-#   ggplot(aes(x=index, y= value)) + 
-#   geom_line()
 
 ############ Verificacion del modelo ############
 
@@ -679,6 +729,9 @@ model_id <- "car_proper_log_log_rho_90_nox"
   dev.off()
   R2<-(cor(y,out.yf[,1]))^2
   print(R2)
+  sink(paste0("../results/", model_id, "/r2.txt"))
+  print(R2)
+  sink()
 }
 
 #phi
@@ -698,7 +751,7 @@ model_id <- "car_proper_log_log_rho_90_nox"
   axis(1, at=1:n, labels=covid$Country[or], las=2)
   segments(1:k,out.est[,3][or],1:k,out.est[,7][or])
   abline(h=0,col="grey70")
-  title("Efecto espacial")
+  title("Spatial Effect")
   dev.off()
 }
 
@@ -719,7 +772,7 @@ model_id <- "car_proper_log_log_rho_90_nox"
   axis(1, at=1:n, labels=covid$Country[or], las=2)
   segments(1:k,out.est[,3][or],1:k,out.est[,7][or])
   abline(h=0,col="grey70")
-  title("Efecto individual")
+  title("Individual Effect")
   dev.off()
 }
 
@@ -734,11 +787,14 @@ model_id <- "car_proper_log_log_rho_90_nox"
   
   covid.map <- sps
 
-  png(paste0("../results/", model_id, "/predicted_smr.png"))
+  png(paste0("../results/", model_id, "/predicted_smr.png"), res = 70)
   plot(covid.map, col = colcode)
   legend(x_etiquetas, y_etiquetas, legend = names(attr(colcode, "table")), 
          fill = attr(colcode, "palette"), cex=1, bty="n")
-  title(main="SMR")
+  text(mean_coords$x, mean_coords$y, mean_coords$Country)
+  text(mean_coords$x, mean_coords$y-3, plotvar |> round(2))
+  plot_arrows(region)
+  title(main="Smoothed SMR")
   dev.off()
 }
 
@@ -760,10 +816,15 @@ model_id <- "car_proper_log_log_rho_90_nox"
   
   legend(x_etiquetas, y_etiquetas, legend = names(attr(colcode, "table")), 
          fill = attr(colcode, "palette"), cex=1, bty="n")
+  text(mean_coords$x, mean_coords$y, mean_coords$Country)
+  text(mean_coords$x, mean_coords$y-3, plotvar |> round(2))
+  plot_arrows(region)
   title(main="SMR")
 }
 
 ############## Resumen de resultados ##############
+
+########## log(y+1),  log(e+1) ##########
 
 log_log_folders <- list.files("../results/", "log_log",
                             recursive=TRUE, include.dirs=TRUE)
@@ -791,3 +852,30 @@ log_log_dics_df <-  log_log_dics |>
 
 log_log_dics_df
 
+############## y, e ##############
+
+folders <- list.files("../results/", "", include.dirs=TRUE)
+
+folders <- folders[!(folders |> grepl(pattern = ".png"))]
+folders <- folders[!(folders |> grepl(pattern = "_log_log"))]
+folders <- folders[!(folders |> grepl(pattern = "_div"))]
+
+dics <- list()
+
+for (folder in folders){
+  
+  dic <- read.table(paste0("../results/",folder,"/dic.txt"))
+  dics[folder] <- dic[2][[1]]
+  
+}
+
+dics_df <-dics |> 
+  as_tibble() |> 
+  t() |>
+  as_tibble() |>
+  rename(dic = V1) |> 
+  mutate(model  = folders)|>
+  select(c(model, dic)) |>
+  arrange(dic)
+
+dics_df
