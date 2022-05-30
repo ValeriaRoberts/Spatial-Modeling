@@ -494,7 +494,8 @@ C <- C[C != 0]
 ### rho puede estar en el rango (1/min_eigen, 1/max_eigen)
 max_eigen <- max(eigenvalues_bugs)
 min_eigen <- min(eigenvalues_bugs)
-rho_weight <- 70 # Elegir del 0 al 100
+
+rho_weight <- 90 # Elegir del 0 al 100
 rho <- (rho_weight/100) * (1 / max_eigen) + ((100-rho_weight)/100) * (1 / min_eigen)
 
 tibble(rho_00 = (0/100) * (1 / max_eigen) + ((100-0)/100) * (1 / min_eigen),
@@ -631,7 +632,7 @@ covid.sim_hierarchical <- bugs(data_hierarchical, inits_hierarchical, parameters
 #
 # Elegimos un identificador para guardar la corrida actual
 
-model_id <- "car_proper_rho_70"
+model_id <- "hierarchical"
 
 ###### !!! Importante !!! ######
 #
@@ -707,6 +708,14 @@ model_id <- "car_proper_rho_70"
   dev.off()
 }
 
+{
+  z<-out$beta[,2]
+  png(paste0("../results/", model_id, "/beta_2_histogram.png"))
+  par()
+  hist(z,freq=FALSE, main="beta_2")
+  # title(main="beta_2")
+  dev.off()
+}
 
 #Tabla resumen
 {
@@ -795,6 +804,29 @@ model_id <- "car_proper_rho_70"
   dev.off()
 }
 
+#phi+theta
+{
+  out.phi_the <- out$phi + out$theta
+  out.phi_the <- tibble(mean = out.phi_the |> colMeans(),
+         "2.5%" = apply(out.phi_the , 2 , quantile , 0.025 ),
+         "97.5%" = apply(out.phi_the , 2 , quantile , 0.975 ))
+  k<-n
+  out.est<-as.matrix(out.phi_the)
+  ymin<-min(out.est[,c(1,2,3)])
+  ymax<-max(out.est[,c(1,2,3)])
+}
+
+{
+  png(paste0("../results/", model_id, "/theta_plus_phi.png"))
+  par(mfrow=c(1,1))
+  plot(1:k,out.est[,1][or],ylab="",ylim=c(ymin,ymax),
+       xlab="", xaxt='n')
+  axis(1, at=1:n, labels=covid$Country[or], las=2)
+  segments(1:k,out.est[,2][or],1:k,out.est[,3][or])
+  abline(h=0,col="grey70")
+  title("Individual Effect + Spatial Effect")
+  dev.off()
+}
 
 #Map of lambda
 {
