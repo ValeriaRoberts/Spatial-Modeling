@@ -516,8 +516,8 @@ tibble(rho_00 = (0/100) * (1 / max_eigen) + ((100-0)/100) * (1 / min_eigen),
 }
 
 {
-  y <- covid$mean_fatalities/1000
-  ee <- covid$mean_deathrate/1000
+  y <- covid$mean_fatalities/100
+  ee <- covid$mean_deathrate/100
 }
 
 {
@@ -632,7 +632,7 @@ covid.sim_hierarchical <- bugs(data_hierarchical, inits_hierarchical, parameters
 #
 # Elegimos un identificador para guardar la corrida actual
 
-model_id <- "hierarchical"
+model_id <- "car_proper_rho_90_div_100"
 
 ###### !!! Importante !!! ######
 #
