@@ -4,4 +4,4 @@ function(){list(beta = rep(0,2),
                        theta = rep(0,n),
                        phi = rep(0,n),
                        yf = rep(0,n))}
-<bytecode: 0x000001ddc3863270>
+<bytecode: 0x0000016599541fb0>

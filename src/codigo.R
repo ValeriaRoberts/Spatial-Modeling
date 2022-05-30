@@ -316,7 +316,20 @@ plot_arrows <- function(region){
   
 }
 
-  #### SMR (standarized morbility rate)
+#### Mapa vacio
+{
+  covid.map <- sps
+  
+  png(paste0("../results/",region,".png"))
+  plot(covid.map)
+  text(mean_coords$x, mean_coords$y, mean_coords$Country)
+  
+  plot_arrows(region)
+  title(main=region)
+  dev.off()
+}
+
+#### SMR (standarized morbility rate)
 # En este caso, analizamos lambda = observados / esperados
 {
   plotvar <- covid$mean_fatalities/covid$mean_deathrate
@@ -481,8 +494,14 @@ C <- C[C != 0]
 ### rho puede estar en el rango (1/min_eigen, 1/max_eigen)
 max_eigen <- max(eigenvalues_bugs)
 min_eigen <- min(eigenvalues_bugs)
-rho_weight <- 90 # Elegir del 0 al 100
+rho_weight <- 70 # Elegir del 0 al 100
 rho <- (rho_weight/100) * (1 / max_eigen) + ((100-rho_weight)/100) * (1 / min_eigen)
+
+tibble(rho_00 = (0/100) * (1 / max_eigen) + ((100-0)/100) * (1 / min_eigen),
+       rho_70 = (70/100) * (1 / max_eigen) + ((100-70)/100) * (1 / min_eigen),
+       rho_80 = (80/100) * (1 / max_eigen) + ((100-80)/100) * (1 / min_eigen),
+       rho_90 = (90/100) * (1 / max_eigen) + ((100-90)/100) * (1 / min_eigen),
+       rho_100 = (100/100) * (1 / max_eigen) + ((100-100)/100) * (1 / min_eigen))
 
 ############ Asignacion de variables para modelo ############
 #
@@ -612,7 +631,7 @@ covid.sim_hierarchical <- bugs(data_hierarchical, inits_hierarchical, parameters
 #
 # Elegimos un identificador para guardar la corrida actual
 
-model_id <- "car_proper_rho_90_nox"
+model_id <- "car_proper_rho_70"
 
 ###### !!! Importante !!! ######
 #
@@ -830,6 +849,7 @@ log_log_folders <- list.files("../results/", "log_log",
                             recursive=TRUE, include.dirs=TRUE)
 
 log_log_folders <- log_log_folders[!(log_log_folders |> grepl(pattern = ".png"))]
+log_log_folders <- log_log_folders[!(log_log_folders |> grepl(pattern = "dics"))]
 
 log_log_dics <- list()
 
@@ -852,6 +872,8 @@ log_log_dics_df <-  log_log_dics |>
 
 log_log_dics_df
 
+write.csv(log_log_dics_df, "../results/log_log_dics.csv")
+
 ############## y, e ##############
 
 folders <- list.files("../results/", "", include.dirs=TRUE)
@@ -859,6 +881,7 @@ folders <- list.files("../results/", "", include.dirs=TRUE)
 folders <- folders[!(folders |> grepl(pattern = ".png"))]
 folders <- folders[!(folders |> grepl(pattern = "_log_log"))]
 folders <- folders[!(folders |> grepl(pattern = "_div"))]
+folders <- folders[!(folders |> grepl(pattern = "dics"))]
 
 dics <- list()
 
@@ -879,3 +902,5 @@ dics_df <-dics |>
   arrange(dic)
 
 dics_df
+
+write.csv(dics_df, "../results/dics.csv")
